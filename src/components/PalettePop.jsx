@@ -320,61 +320,63 @@ export default function PalettePop() {
             <canvas ref={canvasRef} className="hidden" />
 
             {/* Top Navigation Bar */}
-            <header className="max-w-6xl mx-auto px-5 sm:px-8 pt-6 sm:pt-8 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Sparkles size={18} style={{ color: textLo }} />
-                    <span className="ff-mono text-xs sm:text-sm tracking-widest uppercase font-semibold" style={{ color: textHi }}>
-                        Pretty Palette <span className="normal-case opacity-70 font-normal">₊˚⊹ ᰔ</span>
-                    </span>
-                </div>
+            <header className="w-full border-b border-black/10 bg-[#E2E2E2]/90 backdrop-blur-xs sticky top-0 z-40">
+                <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={16} style={{ color: textLo }} />
+                        <span className="ff-mono text-xs sm:text-sm tracking-widest uppercase font-semibold" style={{ color: textHi }}>
+                            Pretty Palette
+                        </span>
+                    </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
-                    {/* Share Button */}
-                    {palette.length > 0 && (
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Share Button */}
+                        {palette.length > 0 && (
+                            <button
+                                onClick={copyShareUrl}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl ff-mono text-xs border border-black/10 hover:bg-black/5 transition-all"
+                                style={{ background: panel, color: textHi }}
+                                title="Copy shareable link"
+                            >
+                                <Share2 size={13} />
+                                <span className="hidden sm:inline">Share</span>
+                            </button>
+                        )}
+
+                        {/* Saved Palettes Button */}
                         <button
-                            onClick={copyShareUrl}
+                            onClick={() => setIsDrawerOpen(true)}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl ff-mono text-xs border border-black/10 hover:bg-black/5 transition-all"
                             style={{ background: panel, color: textHi }}
-                            title="Copy shareable link"
                         >
-                            <Share2 size={13} />
-                            <span className="hidden sm:inline">Share</span>
+                            <Bookmark size={13} />
+                            <span className="hidden sm:inline">Collections</span>
+                            {savedPalettes.length > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-black text-white text-[10px] font-bold">
+                                    {savedPalettes.length}
+                                </span>
+                            )}
                         </button>
-                    )}
 
-                    {/* Saved Palettes Button */}
-                    <button
-                        onClick={() => setIsDrawerOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl ff-mono text-xs border border-black/10 hover:bg-black/5 transition-all"
-                        style={{ background: panel, color: textHi }}
-                    >
-                        <Bookmark size={13} />
-                        <span className="hidden sm:inline">Collections</span>
-                        {savedPalettes.length > 0 && (
-                            <span className="px-1.5 py-0.2 rounded-full bg-black text-white text-[10px] font-bold">
-                                {savedPalettes.length}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* User Account / Google Sign-In */}
-                    <button
-                        onClick={() => setIsAuthOpen(true)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl ff-mono text-xs border border-black/10 hover:bg-black/5 transition-all"
-                        style={{ background: panel, color: textHi }}
-                    >
-                        {user ? (
-                            <>
-                                <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full object-cover border border-black/10" />
-                                <span className="font-semibold truncate max-w-[90px]">{user.name}</span>
-                            </>
-                        ) : (
-                            <>
-                                <User size={14} />
-                                <span>Sign In</span>
-                            </>
-                        )}
-                    </button>
+                        {/* User Account / Google Sign-In */}
+                        <button
+                            onClick={() => setIsAuthOpen(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl ff-mono text-xs border border-black/10 hover:bg-black/5 transition-all"
+                            style={{ background: panel, color: textHi }}
+                        >
+                            {user ? (
+                                <>
+                                    <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full object-cover border border-black/10" />
+                                    <span className="font-semibold truncate max-w-[90px]">{user.name}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <User size={14} />
+                                    <span>Sign In</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -387,11 +389,16 @@ export default function PalettePop() {
             )}
 
             {/* Hero Section */}
-            <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-8 sm:pt-12 pb-6 sm:pb-8">
-                <h1 className="ff-display text-4xl sm:text-6xl md:text-7xl leading-none mb-3 flex items-center flex-wrap gap-2 sm:gap-4" style={{ color: textHi }}>
-                    Pretty Palette
+            <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-10">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <span className="ff-mono text-xs sm:text-sm tracking-widest uppercase" style={{ color: textFaint }}>
+                        image → palette
+                    </span>
+                </div>
+                <h1 className="ff-display text-4xl sm:text-6xl md:text-7xl leading-none mb-3 sm:mb-4 flex items-center flex-wrap gap-2 sm:gap-4" style={{ color: textHi }}>
+                    Pretty Palette <span className="text-xl sm:text-2xl md:text-4xl text-neutral-500 font-normal">₊˚⊹ ᰔ</span>
                 </h1>
-                <p className="ff-body text-base sm:text-lg max-w-2xl" style={{ color: textLo }}>
+                <p className="ff-body text-base sm:text-lg md:text-xl max-w-2xl" style={{ color: textLo }}>
                     Extract artist-ready color palettes from any image, inspect values, lock swatches, and generate dimensional shading ramps.
                 </p>
             </div>

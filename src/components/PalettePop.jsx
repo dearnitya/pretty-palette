@@ -459,7 +459,7 @@ export default function PalettePop() {
                                         )}
                                     </div>
                                     <span className="ff-display text-2xl sm:text-3xl md:text-4xl" style={{ color: textHi }}>
-                                        {palette.length}
+                                        {count}
                                     </span>
                                 </div>
 

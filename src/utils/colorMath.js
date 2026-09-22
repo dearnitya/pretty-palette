@@ -184,9 +184,8 @@ export function nameSwatch(hex) {
 }
 
 // ================= K-means extraction (LAB Space) =================
-// Supports region cropping & locked swatch preservation
+// Supports region cropping, k-means++ seeding, and exact k count guarantee
 export function extractPalette(imageData, k, lockedColors = [], cropRegion = null) {
-    const pixelsLab = [];
     const { data, width, height } = imageData;
 
     let minX = 0, minY = 0, maxX = width, maxY = height;
@@ -197,33 +196,63 @@ export function extractPalette(imageData, k, lockedColors = [], cropRegion = nul
         maxY = Math.min(height, Math.ceil(cropRegion.y + cropRegion.height));
     }
 
+    const pixelsLab = [];
+    const pixelsRgb = [];
+
+    // Sample pixels across the region
     for (let y = minY; y < maxY; y += 2) {
         for (let x = minX; x < maxX; x += 2) {
             const idx = (y * width + x) * 4;
             if (data[idx + 3] < 125) continue;
-            pixelsLab.push(rgbToLab(data[idx], data[idx + 1], data[idx + 2]));
+            const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+            pixelsLab.push(rgbToLab(r, g, b));
+            pixelsRgb.push([r, g, b]);
         }
     }
 
     if (pixelsLab.length === 0) return lockedColors.slice();
 
-    // Determine how many new colors need to be clustered
     const lockedHexes = new Set(lockedColors.map((c) => c.hex.toLowerCase()));
     const needed = Math.max(0, k - lockedColors.length);
 
     if (needed === 0) {
-        return lockedColors.slice();
+        return lockedColors.slice(0, k);
     }
 
-    // Initialize k-means centroids randomly across pixel distribution
+    // Farthest-point / K-Means++ seed initialization
     const centroids = [];
-    for (let i = 0; i < needed; i++) {
-        const randIdx = Math.floor(Math.random() * pixelsLab.length);
-        centroids.push(pixelsLab[randIdx].slice());
+    const seedIndices = new Set();
+    const firstIdx = Math.floor(Math.random() * pixelsLab.length);
+    centroids.push(pixelsLab[firstIdx].slice());
+    seedIndices.add(firstIdx);
+
+    const dists = new Float64Array(pixelsLab.length).fill(Infinity);
+    while (centroids.length < needed) {
+        const lastC = centroids[centroids.length - 1];
+        let bestIdx = 0, maxDist = -1;
+        const sampleStep = pixelsLab.length > 6000 ? 3 : 1;
+
+        for (let p = 0; p < pixelsLab.length; p += sampleStep) {
+            const dl = pixelsLab[p][0] - lastC[0];
+            const da = pixelsLab[p][1] - lastC[1];
+            const db = pixelsLab[p][2] - lastC[2];
+            const d = dl * dl + da * da + db * db;
+            if (d < dists[p]) dists[p] = d;
+
+            if (dists[p] > maxDist && !seedIndices.has(p)) {
+                maxDist = dists[p];
+                bestIdx = p;
+            }
+        }
+        centroids.push(pixelsLab[bestIdx].slice());
+        seedIndices.add(bestIdx);
     }
 
+    // Run K-Means iterations
     const assignments = new Uint32Array(pixelsLab.length);
-    for (let iter = 0; iter < 9; iter++) {
+    const numIterations = Math.min(8, Math.max(4, Math.floor(400 / needed)));
+
+    for (let iter = 0; iter < numIterations; iter++) {
         for (let p = 0; p < pixelsLab.length; p++) {
             let best = 0, bestDist = Infinity;
             const pl0 = pixelsLab[p][0], pl1 = pixelsLab[p][1], pl2 = pixelsLab[p][2];
@@ -253,6 +282,9 @@ export function extractPalette(imageData, k, lockedColors = [], cropRegion = nul
                 centroids[c][0] = sums[c][0] / sums[c][3];
                 centroids[c][1] = sums[c][1] / sums[c][3];
                 centroids[c][2] = sums[c][2] / sums[c][3];
+            } else {
+                const randP = Math.floor(Math.random() * pixelsLab.length);
+                centroids[c] = pixelsLab[randP].slice();
             }
         }
     }
@@ -263,22 +295,49 @@ export function extractPalette(imageData, k, lockedColors = [], cropRegion = nul
     }
 
     const total = pixelsLab.length;
-    const extracted = centroids
-        .map((c, i) => {
-            const rgb = labToRgb(c[0], c[1], c[2]).map((v) => Math.round(v));
-            const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
-            return {
+    const seenHexes = new Set([...lockedHexes]);
+    const extracted = [];
+
+    // Order centroids by pixel frequency
+    const indexedCentroids = centroids.map((c, i) => ({ c, count: counts[i] }));
+    indexedCentroids.sort((a, b) => b.count - a.count);
+
+    for (const item of indexedCentroids) {
+        const rgb = labToRgb(item.c[0], item.c[1], item.c[2]).map((v) => Math.round(v));
+        const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+        const lower = hex.toLowerCase();
+
+        if (!seenHexes.has(lower)) {
+            seenHexes.add(lower);
+            extracted.push({
                 hex,
                 rgb,
-                weight: counts[i] / total,
+                weight: item.count / total,
                 locked: false,
                 name: nameSwatch(hex),
-            };
-        })
-        .filter((c) => !lockedHexes.has(c.hex.toLowerCase()))
-        .filter((c) => c.weight > 0.002);
+            });
+        }
+    }
 
-    // Combine locked colors with newly extracted colors
+    // Backfill from unique pixels if duplicates caused count < needed
+    if (extracted.length < needed) {
+        for (let p = 0; p < pixelsLab.length && extracted.length < needed; p += 3) {
+            const rgb = pixelsRgb[p];
+            const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+            const lower = hex.toLowerCase();
+            if (!seenHexes.has(lower)) {
+                seenHexes.add(lower);
+                extracted.push({
+                    hex,
+                    rgb,
+                    weight: 1 / total,
+                    locked: false,
+                    name: nameSwatch(hex),
+                });
+            }
+        }
+    }
+
     const combined = [...lockedColors, ...extracted];
     return combined.slice(0, k);
 }

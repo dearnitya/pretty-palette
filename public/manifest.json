@@ -4,8 +4,8 @@
     "description": "Extract artist-ready color palettes from any image",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#C0C0C0",
-    "theme_color": "#C0C0C0",
+    "background_color": "#E2E2E2",
+    "theme_color": "#E2E2E2",
     "icons": [
         {
             "src": "/icon-192.png",

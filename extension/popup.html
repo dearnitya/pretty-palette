@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      width: 240px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 16px;
+      margin: 0;
+      background: #E2E2E2;
+      color: #1A1A1A;
+    }
+    h2 {
+      font-size: 16px;
+      margin: 0 0 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    p {
+      font-size: 11px;
+      color: #666;
+      margin: 0 0 14px 0;
+      line-height: 1.4;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #1A1A1A;
+      color: #FFF;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    button:hover {
+      opacity: 0.85;
+    }
+    .hint {
+      font-size: 10px;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Pretty Palette ₊˚⊹</h2>
+  <p>Right-click any image on Pinterest, Behance, or ArtStation to extract its palette!</p>
+  <button id="open-studio">Open Studio</button>
+  <div class="hint">Or paste any image URL with Ctrl+V</div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -83,7 +83,7 @@ export default function PalettePop() {
     const canvasRef = useRef(null);
     const imgElRef = useRef(null);
 
-    // Check URL hash on initial load
+    // Check URL query and hash on initial load
     useEffect(() => {
         const shared = decodePaletteFromHash();
         if (shared && shared.length > 0) {
@@ -91,8 +91,24 @@ export default function PalettePop() {
             setCount(shared.length);
             setShareToast("Loaded palette from shared link!");
             setTimeout(() => setShareToast(null), 3000);
+            return;
         }
-    }, []);
+
+        const params = new URLSearchParams(window.location.search);
+        const imgParam = params.get("img");
+        if (imgParam) {
+            const imgEl = new window.Image();
+            imgEl.crossOrigin = "anonymous";
+            imgEl.onload = () => {
+                setImage(imgParam);
+                imgElRef.current = imgEl;
+                runExtraction(imgEl, count, null, []);
+                setShareToast("Loaded image from link!");
+                setTimeout(() => setShareToast(null), 3000);
+            };
+            imgEl.src = imgParam;
+        }
+    }, [count, runExtraction]);
 
     // Update URL hash when palette changes
     useEffect(() => {
@@ -174,7 +190,7 @@ export default function PalettePop() {
         }, 30);
     }, []);
 
-    const handleFile = (file) => {
+    const handleFile = useCallback((file) => {
         if (!file || !file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
         setImage(url);
@@ -186,7 +202,44 @@ export default function PalettePop() {
             runExtraction(imgEl, count, null, []);
         };
         imgEl.src = url;
-    };
+    }, [count, runExtraction]);
+
+    // Handle paste event (Ctrl+V) from other tabs, Pinterest, or apps
+    useEffect(() => {
+        const handlePaste = (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") !== -1) {
+                    const blob = items[i].getAsFile();
+                    if (blob) {
+                        handleFile(blob);
+                        setShareToast("Pasted image from clipboard!");
+                        setTimeout(() => setShareToast(null), 2200);
+                        return;
+                    }
+                }
+            }
+
+            const text = e.clipboardData?.getData("text") || "";
+            if (/^https?:\/\/.*\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(text.trim())) {
+                const imgEl = new window.Image();
+                imgEl.crossOrigin = "anonymous";
+                imgEl.onload = () => {
+                    setImage(text.trim());
+                    imgElRef.current = imgEl;
+                    runExtraction(imgEl, count, null, []);
+                    setShareToast("Loaded image from pasted URL!");
+                    setTimeout(() => setShareToast(null), 2200);
+                };
+                imgEl.src = text.trim();
+            }
+        };
+
+        window.addEventListener("paste", handlePaste);
+        return () => window.removeEventListener("paste", handlePaste);
+    }, [handleFile, count, runExtraction]);
 
     const handleCountChange = (val) => {
         setCount(val);
@@ -417,7 +470,7 @@ export default function PalettePop() {
                     >
                         <Upload size={36} style={{ color: textLo }} />
                         <span className="ff-body text-sm sm:text-lg font-medium text-center px-4" style={{ color: textLo }}>
-                            Drag an image here, or click to choose one
+                            Drag an image here, click to choose, or paste with <kbd className="ff-mono text-xs px-1.5 py-0.5 rounded bg-black/10 font-semibold">Ctrl+V</kbd>
                         </span>
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
                     </label>

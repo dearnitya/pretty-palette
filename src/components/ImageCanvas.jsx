@@ -148,10 +148,15 @@ export default function ImageCanvas({
     };
 
     // System Eyedropper API (Chrome/Edge/Opera)
+    // Continuous sampling loop: keeps sampling until user presses Escape or cancels
+    const [isScreenSampling, setIsScreenSampling] = useState(false);
+
     const handleSystemEyeDropper = async () => {
-        if (window.EyeDropper) {
-            try {
-                const dropper = new window.EyeDropper();
+        if (!window.EyeDropper) return;
+        setIsScreenSampling(true);
+        try {
+            const dropper = new window.EyeDropper();
+            while (true) {
                 const result = await dropper.open();
                 if (result?.sRGBHex) {
                     const hex = result.sRGBHex;
@@ -161,10 +166,14 @@ export default function ImageCanvas({
                     onPickColor(hex, [r, g, b]);
                     setPickedAlert(hex);
                     setTimeout(() => setPickedAlert(null), 1400);
+                } else {
+                    break;
                 }
-            } catch {
-                // User cancelled or unsupported
             }
+        } catch {
+            // User pressed Esc to stop
+        } finally {
+            setIsScreenSampling(false);
         }
     };
 
@@ -179,21 +188,23 @@ export default function ImageCanvas({
                         background: activeTool === "eyedropper" ? textHi : "transparent",
                         color: activeTool === "eyedropper" ? "#FFFFFF" : textLo,
                     }}
-                    title="Click image to pick exact color"
+                    title="Click image to pick exact color with magnifier loupe"
                 >
                     <Pipette size={14} />
-                    <span>Eyedropper</span>
+                    <span>Photo Eyedropper</span>
                 </button>
 
                 {window.EyeDropper && (
                     <button
                         onClick={handleSystemEyeDropper}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg ff-mono text-xs transition-colors hover:bg-black/5"
-                        style={{ color: textFaint }}
-                        title="Sample any pixel from your entire screen"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ff-mono text-xs font-medium transition-all ${
+                            isScreenSampling ? "bg-black text-white" : "hover:bg-black/5"
+                        }`}
+                        style={{ color: isScreenSampling ? "#FFFFFF" : textLo }}
+                        title="Sample any pixel from your screen, second monitor, or side-by-side tabs (Press Esc when done)"
                     >
                         <Sparkles size={13} />
-                        <span className="hidden sm:inline">Screen</span>
+                        <span>Desktop / Screen</span>
                     </button>
                 )}
 
@@ -226,6 +237,11 @@ export default function ImageCanvas({
             {activeTool === "eyedropper" && (
                 <div className="ff-mono text-[11px] flex items-center gap-1 animate-fadeIn" style={{ color: textFaint }}>
                     <span>Hover over the image and click to pin a custom color.</span>
+                </div>
+            )}
+            {isScreenSampling && (
+                <div className="ff-mono text-[11px] flex items-center gap-1.5 animate-fadeIn p-2 rounded-lg bg-black/5" style={{ color: textHi }}>
+                    <span>Sampling active! Click any pixel on your desktop or split-screen window (e.g. Pinterest, Figma). Press <b>Esc</b> when done.</span>
                 </div>
             )}
             {activeTool === "crop" && (

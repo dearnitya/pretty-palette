@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Pretty Palette - Image Palette Companion",
+  "version": "1.0.0",
+  "description": "Right-click any image on Pinterest, ArtStation, Behance, or Google to extract artist color palettes with Pretty Palette.",
+  "permissions": [
+    "contextMenus",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Pretty Palette Studio"
+  }
+}

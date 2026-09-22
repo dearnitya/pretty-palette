@@ -324,7 +324,7 @@ export default function PalettePop() {
                 <div className="flex items-center gap-2">
                     <Sparkles size={18} style={{ color: textLo }} />
                     <span className="ff-mono text-xs sm:text-sm tracking-widest uppercase font-semibold" style={{ color: textHi }}>
-                        Palette Pop <span className="normal-case opacity-70 font-normal">₊˚⊹ ᰔ</span>
+                        Pretty Palette <span className="normal-case opacity-70 font-normal">₊˚⊹ ᰔ</span>
                     </span>
                 </div>
 
@@ -389,7 +389,7 @@ export default function PalettePop() {
             {/* Hero Section */}
             <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-8 sm:pt-12 pb-6 sm:pb-8">
                 <h1 className="ff-display text-4xl sm:text-6xl md:text-7xl leading-none mb-3 flex items-center flex-wrap gap-2 sm:gap-4" style={{ color: textHi }}>
-                    Palette Pop
+                    Pretty Palette
                 </h1>
                 <p className="ff-body text-base sm:text-lg max-w-2xl" style={{ color: textLo }}>
                     Extract artist-ready color palettes from any image, inspect values, lock swatches, and generate dimensional shading ramps.

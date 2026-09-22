@@ -99,7 +99,7 @@ export function makeZip(files) {
 }
 
 // ================= Procreate .swatches =================
-export function exportProcreate(palette, name = "Palette Pop") {
+export function exportProcreate(palette, name = "Pretty Palette") {
     const swatches = palette.map((c) => {
         const [h, s, b] = rgbToHsb(c.rgb[0], c.rgb[1], c.rgb[2]);
         return { hue: h, saturation: s, brightness: b, alpha: 1, colorSpace: 0 };
@@ -161,7 +161,7 @@ export function exportAco(palette, name = "palette") {
 }
 
 // ================= Adobe Swatch Exchange (.ase) binary export =================
-export function exportAse(palette, name = "Palette Pop") {
+export function exportAse(palette, name = "Pretty Palette") {
     const blocks = [];
     let totalLen = 12; // 4 bytes ASEF + 4 bytes version + 4 bytes block count
 
